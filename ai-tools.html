@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Medical Advisor — HealDotIndia</title>
+<meta name="description" content="AI-powered treatment recommender. Describe your condition, get instant hospital matches, cost estimates, and travel plan for India.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0A2647;--gold:#D4A017;--gold-light:#F5E6B8;
+  --cream:#FAFAF7;--white:#fff;--text:#1A1A2E;--muted:#5A6070;
+  --border:#E8E8E0;--success:#0F6E56;--danger:#e24b4a;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--cream);overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(10,38,71,0.97);backdrop-filter:blur(10px);border-bottom:1px solid rgba(212,160,23,0.2)}
+.nav-inner{max-width:1200px;margin:auto;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:70px}
+.logo{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--white);font-weight:700}
+.logo span{color:var(--gold)}
+.back-btn{display:flex;align-items:center;gap:0.5rem;color:rgba(255,255,255,0.7);font-size:0.9rem;transition:color 0.2s}
+.back-btn:hover{color:var(--gold)}
+
+/* HERO */
+.hero{padding:120px 2rem 60px;background:linear-gradient(135deg,var(--navy) 0%,#16345a 100%);position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-30%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(212,160,23,0.1),transparent 70%);pointer-events:none}
+.hero-inner{max-width:900px;margin:auto;text-align:center}
+.ai-badge{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(212,160,23,0.15);border:1px solid rgba(212,160,23,0.3);color:var(--gold);padding:0.4rem 1.2rem;border-radius:20px;font-size:0.8rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:1.5rem}
+.ai-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,4.5vw,3.2rem);color:var(--white);line-height:1.15;margin-bottom:1rem}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero-sub{color:rgba(255,255,255,0.7);font-size:1.05rem;line-height:1.7;max-width:600px;margin:0 auto}
+
+/* MAIN CARD */
+.main-wrap{max-width:900px;margin:-40px auto 0;padding:0 2rem 80px;position:relative;z-index:10}
+.advisor-card{background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(10,38,71,0.12)}
+
+/* TABS */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border)}
+.tab-btn{padding:1.1rem;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.2s;border-bottom:2px solid transparent;display:flex;align-items:center;justify-content:center;gap:0.4rem}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--gold);background:rgba(212,160,23,0.04)}
+.tab-btn:hover:not(.active){color:var(--navy);background:var(--cream)}
+
+/* TAB PANELS */
+.tab-panel{display:none;padding:2rem}
+.tab-panel.active{display:block}
+
+/* SYMPTOM CHECKER */
+.input-area{position:relative;margin-bottom:1.5rem}
+.input-area textarea{width:100%;min-height:130px;border:1.5px solid var(--border);border-radius:12px;padding:1rem 1.2rem;font-size:1rem;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--cream);resize:none;transition:border-color 0.2s;line-height:1.6}
+.input-area textarea:focus{outline:none;border-color:var(--navy)}
+.input-area textarea::placeholder{color:#aaa}
+.char-count{position:absolute;bottom:10px;right:14px;font-size:0.75rem;color:#ccc}
+.quick-chips{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.chip{background:var(--cream);border:1px solid var(--border);border-radius:20px;padding:0.35rem 0.9rem;font-size:0.8rem;color:var(--muted);cursor:pointer;transition:all 0.2s}
+.chip:hover{border-color:var(--gold);color:var(--navy);background:var(--gold-light)}
+.options-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+.form-group{display:flex;flex-direction:column;gap:0.4rem}
+.form-group label{font-size:0.82rem;font-weight:600;color:var(--navy)}
+.form-group select{border:1.5px solid var(--border);border-radius:8px;padding:0.65rem 1rem;font-size:0.9rem;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--white);cursor:pointer;transition:border-color 0.2s}
+.form-group select:focus{outline:none;border-color:var(--navy)}
+.ask-btn{width:100%;background:var(--navy);color:var(--white);border:none;padding:1rem;border-radius:10px;font-size:1rem;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.6rem}
+.ask-btn:hover{background:#16345a;transform:translateY(-1px)}
+.ask-btn:disabled{background:#ccc;cursor:not-allowed;transform:none}
+.ask-btn .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;display:none}
+.ask-btn.loading .spinner{display:block}
+.ask-btn.loading .btn-text{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* AI RESPONSE */
+.ai-response{display:none;margin-top:1.5rem;animation:fadeUp 0.4s ease}
+.ai-response.show{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.response-header{display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.ai-avatar{width:36px;height:36px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1rem;flex-shrink:0}
+.response-meta strong{display:block;font-size:0.9rem;color:var(--navy)}
+.response-meta span{font-size:0.78rem;color:var(--muted)}
+.response-body{font-size:0.95rem;line-height:1.8;color:var(--text)}
+.response-body h3{font-size:1rem;font-weight:600;color:var(--navy);margin:1.2rem 0 0.5rem}
+.response-body h3:first-child{margin-top:0}
+.response-body ul{padding-left:1.2rem;margin:0.4rem 0}
+.response-body li{margin-bottom:0.3rem;color:var(--text)}
+.response-body .highlight-box{background:rgba(212,160,23,0.08);border:1px solid rgba(212,160,23,0.3);border-radius:10px;padding:1rem 1.2rem;margin:1rem 0}
+.response-body .highlight-box strong{color:var(--navy)}
+.response-body .cost-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin:1rem 0}
+.cost-item{text-align:center;padding:0.75rem;border-radius:8px;border:1px solid var(--border)}
+.cost-item .cost-label{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem}
+.cost-item .cost-val{font-size:1.1rem;font-weight:700}
+.cost-item.home-cost .cost-val{color:var(--danger)}
+.cost-item.india-cost .cost-val{color:var(--success)}
+.cost-item.saving .cost-val{color:var(--gold)}
+.cta-strip{margin-top:1.5rem;padding:1rem 1.2rem;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.cta-strip p{color:rgba(255,255,255,0.8);font-size:0.9rem}
+.cta-strip a{background:var(--gold);color:var(--navy);padding:0.6rem 1.4rem;border-radius:8px;font-weight:600;font-size:0.88rem;white-space:nowrap}
+
+/* HOSPITAL MATCHER */
+.matcher-form{display:flex;flex-direction:column;gap:1.2rem;margin-bottom:1.5rem}
+.matcher-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.match-btn{background:var(--gold);color:var(--navy);border:none;padding:0.9rem 2rem;border-radius:10px;font-weight:700;font-size:0.95rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem}
+.match-btn:hover{background:#c4910f;transform:translateY(-1px)}
+.match-btn:disabled{background:#ccc;cursor:not-allowed;transform:none}
+.hospitals-result{display:none;margin-top:1.5rem;animation:fadeUp 0.4s ease}
+.hospitals-result.show{display:flex;flex-direction:column;gap:1rem}
+.hospital-match{display:flex;gap:1rem;padding:1.25rem;border:1px solid var(--border);border-radius:12px;transition:all 0.3s;cursor:pointer}
+.hospital-match:hover{border-color:var(--gold);background:rgba(212,160,23,0.03)}
+.hospital-match.top{border-color:var(--gold);background:rgba(212,160,23,0.04)}
+.match-rank{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;flex-shrink:0}
+.match-rank.r1{background:var(--gold);color:var(--navy)}
+.match-rank.r2{background:rgba(212,160,23,0.2);color:var(--navy)}
+.match-rank.r3{background:var(--cream);color:var(--muted);border:1px solid var(--border)}
+.match-info{flex:1}
+.match-name{font-weight:600;color:var(--navy);margin-bottom:2px}
+.match-city{font-size:0.82rem;color:var(--muted);margin-bottom:6px}
+.match-tags{display:flex;gap:0.4rem;flex-wrap:wrap}
+.match-tag{font-size:0.7rem;padding:2px 8px;border-radius:4px;background:rgba(10,38,71,0.06);color:var(--navy)}
+.match-tag.jci{background:rgba(15,110,86,0.1);color:var(--success)}
+.match-score{text-align:right;flex-shrink:0}
+.match-pct{font-size:1.2rem;font-weight:700;color:var(--success);display:block}
+.match-cost{font-size:0.78rem;color:var(--muted)}
+
+/* COST AI */
+.cost-ai-form{display:flex;flex-direction:column;gap:1.2rem;margin-bottom:1.5rem}
+.slider-row{display:flex;flex-direction:column;gap:0.5rem}
+.slider-row label{font-size:0.82rem;font-weight:600;color:var(--navy);display:flex;justify-content:space-between}
+.slider-row label span{color:var(--gold);font-weight:700}
+input[type=range]{width:100%;accent-color:var(--navy)}
+.cost-ai-result{display:none;animation:fadeUp 0.4s ease}
+.cost-ai-result.show{display:block}
+.cost-breakdown{display:grid;grid-template-columns:repeat(2,1fr);gap:0.75rem;margin-bottom:1rem}
+.breakdown-item{padding:1rem;border-radius:10px;border:1px solid var(--border)}
+.breakdown-item .b-label{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem}
+.breakdown-item .b-val{font-size:1.15rem;font-weight:700;color:var(--navy)}
+.breakdown-item.total-save{background:rgba(15,110,86,0.07);border-color:rgba(15,110,86,0.3)}
+.breakdown-item.total-save .b-val{color:var(--success)}
+.breakdown-item.home-price .b-val{color:var(--danger)}
+.breakdown-note{font-size:0.82rem;color:var(--muted);line-height:1.5;padding:0.75rem;background:var(--cream);border-radius:8px}
+
+/* STATS BAR */
+.stats-bar{background:var(--navy);display:grid;grid-template-columns:repeat(4,1fr);text-align:center;padding:1.5rem 2rem}
+.stat-item .snum{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:var(--gold)}
+.stat-item .slbl{font-size:0.75rem;color:rgba(255,255,255,0.6);margin-top:2px}
+
+/* DISCLAIMER */
+.disclaimer{background:rgba(226,75,74,0.05);border:1px solid rgba(226,75,74,0.2);border-radius:8px;padding:0.75rem 1rem;font-size:0.78rem;color:var(--muted);margin-top:1rem;line-height:1.5}
+
+@media(max-width:600px){
+  .options-row,.matcher-row,.cost-ai-form .matcher-row,.response-body .cost-grid{grid-template-columns:1fr}
+  .tabs{grid-template-columns:1fr}
+  .stats-bar{grid-template-columns:repeat(2,1fr);gap:1rem}
+  .cta-strip{flex-direction:column;text-align:center}
+  .cost-breakdown{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Heal<span>Dot</span>India</a>
+    <a href="index.html" class="back-btn">← Back to Main Site</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="ai-badge"><span class="ai-dot"></span>Powered by Claude AI</div>
+    <h1>Your Personal<br><em>AI Medical Advisor</em></h1>
+    <p class="hero-sub">Describe your condition, get AI-matched hospitals in India, real cost estimates, and a personalised travel plan — in seconds.</p>
+  </div>
+</div>
+
+<div class="main-wrap">
+  <div class="stats-bar">
+    <div class="stat-item"><div class="snum">3.2s</div><div class="slbl">Avg. AI Response</div></div>
+    <div class="stat-item"><div class="snum">47</div><div class="slbl">Treatments Covered</div></div>
+    <div class="stat-item"><div class="snum">6</div><div class="slbl">Partner Hospitals</div></div>
+    <div class="stat-item"><div class="snum">90%</div><div class="slbl">Avg. Cost Saving</div></div>
+  </div>
+
+  <div class="advisor-card">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('symptom',this)">🩺 Symptom Advisor</button>
+      <button class="tab-btn" onclick="switchTab('matcher',this)">🏥 Hospital Matcher</button>
+      <button class="tab-btn" onclick="switchTab('cost',this)">💰 Cost Planner</button>
+    </div>
+
+    <!-- TAB 1: SYMPTOM ADVISOR -->
+    <div class="tab-panel active" id="tab-symptom">
+      <h3 style="font-size:1.05rem;color:var(--navy);margin-bottom:0.4rem">Describe your condition</h3>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:1.2rem">Be as specific as possible — duration, severity, previous diagnoses. The more detail, the better the advice.</p>
+      <div class="quick-chips">
+        <span class="chip" onclick="fillChip('Heart blockage, chest pain, shortness of breath for 3 months')">Heart blockage</span>
+        <span class="chip" onclick="fillChip('Knee pain, severe arthritis, difficulty walking, need replacement')">Knee arthritis</span>
+        <span class="chip" onclick="fillChip('Diagnosed with early-stage breast cancer, need oncology second opinion')">Cancer treatment</span>
+        <span class="chip" onclick="fillChip('Failed IVF twice in my country, looking for fertility treatment options')">IVF / Fertility</span>
+        <span class="chip" onclick="fillChip('Herniated disc L4-L5, chronic lower back pain, need spine surgery evaluation')">Spine surgery</span>
+      </div>
+      <div class="input-area">
+        <textarea id="symptom-input" placeholder="e.g. I have been diagnosed with coronary artery disease. My cardiologist in the US quoted $85,000 for bypass surgery. I am 58 years old and otherwise healthy..." maxlength="600" oninput="updateCount(this)"></textarea>
+        <span class="char-count" id="char-count">0/600</span>
+      </div>
+      <div class="options-row">
+        <div class="form-group">
+          <label>Your country</label>
+          <select id="sym-country">
+            <option>United States</option><option>United Kingdom</option><option>Canada</option><option>Australia</option><option>UAE</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Urgency</label>
+          <select id="sym-urgency">
+            <option>Within 3 months</option><option>Within 1 month</option><option>Urgent – within 2 weeks</option><option>Researching options</option>
+          </select>
+        </div>
+      </div>
+      <button class="ask-btn" id="ask-btn" onclick="askAI()">
+        <span class="btn-text">✦ Get AI Medical Advice</span>
+        <div class="spinner"></div>
+      </button>
+      <div class="disclaimer">⚠️ This AI advisor provides general information only. It is not a substitute for professional medical advice. Always consult a qualified doctor before making treatment decisions.</div>
+      <div class="ai-response" id="ai-response">
+        <div class="response-header">
+          <div class="ai-avatar">✦</div>
+          <div class="response-meta">
+            <strong>HealDotIndia AI Advisor</strong>
+            <span id="response-time">Analysed in 2.1s · Based on your condition and country</span>
+          </div>
+        </div>
+        <div class="response-body" id="response-content"></div>
+        <div class="cta-strip">
+          <p>Ready to take the next step? Our coordinators are available 24/7.</p>
+          <a href="index.html#consult">Book Free Consultation →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: HOSPITAL MATCHER -->
+    <div class="tab-panel" id="tab-matcher">
+      <h3 style="font-size:1.05rem;color:var(--navy);margin-bottom:0.4rem">Find your best-matched hospital</h3>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:1.5rem">Our AI scores hospitals based on your specific condition, location, and budget — not just a generic list.</p>
+      <div class="matcher-form">
+        <div class="matcher-row">
+          <div class="form-group">
+            <label>Treatment needed</label>
+            <select id="match-treatment">
+              <option>Cardiac Surgery</option><option>Knee / Hip Replacement</option><option>Cancer Treatment</option><option>IVF & Fertility</option><option>Spine / Neuro Surgery</option><option>Dental Treatment</option><option>Liver Transplant</option><option>Cosmetic Surgery</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Preferred city</label>
+            <select id="match-city">
+              <option>No preference (best match)</option><option>New Delhi</option><option>Mumbai</option><option>Bangalore</option><option>Chennai</option>
+            </select>
+          </div>
+        </div>
+        <div class="matcher-row">
+          <div class="form-group">
+            <label>Budget (USD)</label>
+            <select id="match-budget">
+              <option>Under $5,000</option><option>$5,000 – $10,000</option><option>$10,000 – $20,000</option><option>$20,000+</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="match-priority">
+              <option>Lowest cost</option><option>Best success rate</option><option>Fastest availability</option><option>Most experienced surgeon</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button class="match-btn" id="match-btn" onclick="matchHospitals()">
+        <span class="btn-text">⚡ Match Me to Hospitals</span>
+        <div class="spinner" style="border-color:rgba(10,38,71,0.3);border-top-color:var(--navy)"></div>
+      </button>
+      <div class="hospitals-result" id="hospitals-result"></div>
+    </div>
+
+    <!-- TAB 3: COST PLANNER -->
+    <div class="tab-panel" id="tab-cost">
+      <h3 style="font-size:1.05rem;color:var(--navy);margin-bottom:0.4rem">Full trip cost planner</h3>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:1.5rem">Not just the surgery — see your total India trip cost including flights, accommodation, and recovery stay.</p>
+      <div class="cost-ai-form">
+        <div class="form-group">
+          <label>Treatment</label>
+          <select id="cp-treatment" onchange="updateCostCalc()">
+            <option value="7000,6">Heart Bypass Surgery</option>
+            <option value="6500,4">Knee Replacement</option>
+            <option value="4000,3">Cancer Treatment (per cycle)</option>
+            <option value="800,0">Dental Implant (same day)</option>
+            <option value="3500,10">IVF Treatment</option>
+            <option value="9000,5">Spine / Neuro Surgery</option>
+            <option value="15000,21">Liver Transplant</option>
+          </select>
+        </div>
+        <div class="matcher-row">
+          <div class="form-group">
+            <label>Your country</label>
+            <select id="cp-country" onchange="updateCostCalc()">
+              <option value="USA,80000,1">United States</option>
+              <option value="UK,45000,0.79">United Kingdom</option>
+              <option value="Canada,70000,1.36">Canada</option>
+              <option value="Australia,60000,1.53">Australia</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Companions travelling</label>
+            <select id="cp-companions" onchange="updateCostCalc()">
+              <option value="0">Travelling alone</option>
+              <option value="1">+1 companion</option>
+              <option value="2">+2 companions</option>
+            </select>
+          </div>
+        </div>
+        <div class="slider-row">
+          <label>Hotel quality preference <span id="hotel-val">3-star (~$40/night)</span></label>
+          <input type="range" min="1" max="3" value="2" id="cp-hotel" oninput="updateHotelLabel();updateCostCalc()">
+        </div>
+      </div>
+      <div class="cost-ai-result show" id="cost-result"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Tab switching ──────────────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'cost') updateCostCalc();
+}
+
+// ── Symptom advisor ────────────────────────────────────────
+function updateCount(el) {
+  document.getElementById('char-count').textContent = el.value.length + '/600';
+}
+function fillChip(text) {
+  const ta = document.getElementById('symptom-input');
+  ta.value = text;
+  updateCount(ta);
+}
+
+async function askAI() {
+  const symptom = document.getElementById('symptom-input').value.trim();
+  if (!symptom) { alert('Please describe your condition first.'); return; }
+  const country = document.getElementById('sym-country').value;
+  const urgency = document.getElementById('sym-urgency').value;
+  const btn = document.getElementById('ask-btn');
+  btn.disabled = true; btn.classList.add('loading');
+
+  const start = Date.now();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `You are HealDotIndia's AI Medical Advisor. A patient from ${country} with urgency "${urgency}" has described their condition. Your job:
+1. Acknowledge their condition briefly and empathetically.
+2. Name the likely treatment(s) needed in India.
+3. Show a cost comparison using this format exactly — wrap in <div class="highlight-box"><div class="cost-grid"><div class="cost-item home-cost"><div class="cost-label">Cost in ${country}</div><div class="cost-val">$XX,XXX</div></div><div class="cost-item india-cost"><div class="cost-label">Cost in India</div><div class="cost-val">$X,XXX</div></div><div class="cost-item saving"><div class="cost-label">You Save</div><div class="cost-val">$XX,XXX</div></div></div></div>
+4. Recommend 2 specific Indian hospitals by name for their condition.
+5. Give a 3-point action plan titled "Your Next Steps".
+Use HTML formatting: <h3> for section headings, <ul><li> for lists. Keep total response under 350 words. Be confident, specific, and warm. Do NOT use markdown — only HTML tags listed above.`,
+        messages: [{ role: 'user', content: symptom }]
+      })
+    });
+    const data = await res.json();
+    const html = data.content?.[0]?.text || 'Sorry, could not generate a response. Please try again.';
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+    document.getElementById('response-time').textContent = `Analysed in ${elapsed}s · Based on your condition and country`;
+    document.getElementById('response-content').innerHTML = html;
+    const responseEl = document.getElementById('ai-response');
+    responseEl.classList.add('show');
+    responseEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (e) {
+    document.getElementById('response-content').innerHTML = '<p style="color:var(--danger)">Network error. Please check your connection and try again.</p>';
+    document.getElementById('ai-response').classList.add('show');
+  }
+  btn.disabled = false; btn.classList.remove('loading');
+}
+
+// ── Hospital matcher ───────────────────────────────────────
+const HOSPITALS = {
+  'Cardiac Surgery':       [{n:'Apollo Hospitals Delhi',c:'New Delhi',tags:['JCI','NABH','Cardiac CoE'],score:98,cost:'$6,800–$8,200'},{n:'Medanta – The Medicity',c:'Gurgaon',tags:['JCI','NABH'],score:94,cost:'$7,000–$9,000'},{n:'Fortis Escorts Heart',c:'New Delhi',tags:['JCI','NABH'],score:89,cost:'$6,500–$8,000'}],
+  'Knee / Hip Replacement':[{n:'Apollo Hospitals Delhi',c:'New Delhi',tags:['JCI','Ortho CoE'],score:96,cost:'$5,800–$7,000'},{n:'Fortis Healthcare',c:'Bangalore',tags:['JCI','NABH'],score:92,cost:'$6,000–$7,500'},{n:'Manipal Hospitals',c:'Bangalore',tags:['JCI','Robotic'],score:88,cost:'$5,500–$7,200'}],
+  'Cancer Treatment':      [{n:'Max Healthcare',c:'New Delhi',tags:['JCI','Onco CoE'],score:97,cost:'$3,800–$5,500'},{n:'Apollo Cancer Centre',c:'Chennai',tags:['JCI','Proton Therapy'],score:95,cost:'$4,000–$6,000'},{n:'Kokilaben Hospital',c:'Mumbai',tags:['JCI','PET-CT'],score:90,cost:'$3,500–$5,000'}],
+  'IVF & Fertility':       [{n:'Fortis La Femme',c:'New Delhi',tags:['NABH','IVF CoE'],score:94,cost:'$3,200–$4,500'},{n:'Nova IVI Fertility',c:'Bangalore',tags:['NABH','AI Embryo'],score:91,cost:'$3,000–$4,000'},{n:'Manipal Fertility',c:'Bangalore',tags:['NABH'],score:87,cost:'$2,800–$3,800'}],
+  'Spine / Neuro Surgery': [{n:'Apollo Hospitals Delhi',c:'New Delhi',tags:['JCI','Robotic Spine'],score:97,cost:'$8,500–$11,000'},{n:'Medanta Spine Centre',c:'Gurgaon',tags:['JCI','NABH'],score:93,cost:'$7,800–$10,500'},{n:'Manipal Hospitals',c:'Bangalore',tags:['JCI','Neuro CoE'],score:89,cost:'$7,000–$9,500'}],
+  'Dental Treatment':      [{n:'Clove Dental',c:'New Delhi',tags:['ISO','Implant CoE'],score:95,cost:'$700–$950'},{n:'Apollo White Dental',c:'Bangalore',tags:['NABH'],score:90,cost:'$750–$1,000'},{n:'Kokilaben Dental',c:'Mumbai',tags:['JCI'],score:86,cost:'$800–$1,100'}],
+  'Liver Transplant':      [{n:'Apollo Hospitals Chennai',c:'Chennai',tags:['JCI','Transplant CoE'],score:98,cost:'$14,000–$18,000'},{n:'Medanta Liver Institute',c:'Gurgaon',tags:['JCI','NABH'],score:95,cost:'$13,500–$17,000'},{n:'Fortis Memorial',c:'Gurgaon',tags:['JCI','NABH'],score:91,cost:'$12,000–$16,000'}],
+  'Cosmetic Surgery':      [{n:'Kokilaben Hospital',c:'Mumbai',tags:['JCI','Plastics CoE'],score:93,cost:'Varies'},{n:'Apollo Cosmetic Clinic',c:'Bangalore',tags:['NABH'],score:89,cost:'Varies'},{n:'Fortis Aesthetic',c:'New Delhi',tags:['NABH'],score:85,cost:'Varies'}]
+};
+
+function matchHospitals() {
+  const treatment = document.getElementById('match-treatment').value;
+  const priority = document.getElementById('match-priority').value;
+  const btn = document.getElementById('match-btn');
+  btn.disabled = true; btn.classList.add('loading');
+  const btnText = btn.querySelector('.btn-text');
+  const spinner = btn.querySelector('.spinner');
+  if (btnText) btnText.style.display = 'none';
+  spinner.style.display = 'block';
+
+  setTimeout(() => {
+    const list = HOSPITALS[treatment] || HOSPITALS['Cardiac Surgery'];
+    const sorted = [...list].sort((a, b) => {
+      if (priority === 'Lowest cost') return a.score - b.score;
+      if (priority === 'Fastest availability') return a.score > b.score ? -1 : 1;
+      return b.score - a.score;
+    });
+    const rankClass = ['r1','r2','r3'];
+    const rankLabel = ['#1','#2','#3'];
+    let html = sorted.map((h, i) => `
+      <div class="hospital-match ${i===0?'top':''}">
+        <div class="match-rank ${rankClass[i]}">${rankLabel[i]}</div>
+        <div class="match-info">
+          <div class="match-name">${h.n}</div>
+          <div class="match-city">📍 ${h.c}</div>
+          <div class="match-tags">${h.tags.map(t=>`<span class="match-tag ${t==='JCI'?'jci':''}">${t}</span>`).join('')}</div>
+        </div>
+        <div class="match-score">
+          <span class="match-pct">${h.score}%</span>
+          <span class="match-cost">${h.cost}</span>
+        </div>
+      </div>`).join('');
+    html += `<div style="text-align:center;margin-top:0.5rem"><a href="index.html#consult" style="background:var(--navy);color:white;padding:0.75rem 2rem;border-radius:8px;font-weight:600;font-size:0.9rem;display:inline-block">Book Free Consultation for ${treatment} →</a></div>`;
+    const el = document.getElementById('hospitals-result');
+    el.innerHTML = html;
+    el.classList.add('show');
+    btn.disabled = false; btn.classList.remove('loading');
+    if (btnText) btnText.style.display = '';
+    spinner.style.display = 'none';
+  }, 900);
+}
+
+// ── Cost planner ───────────────────────────────────────────
+const HOTEL_LABELS = ['2-star (~$25/night)','3-star (~$40/night)','5-star (~$90/night)'];
+const HOTEL_RATES  = [25, 40, 90];
+const HOME_COSTS   = {'Heart Bypass Surgery':80000,'Knee Replacement':45000,'Cancer Treatment (per cycle)':30000,'Dental Implant (same day)':5000,'IVF Treatment':20000,'Spine / Neuro Surgery':70000,'Liver Transplant':120000};
+
+function updateHotelLabel() {
+  const v = parseInt(document.getElementById('cp-hotel').value) - 1;
+  document.getElementById('hotel-val').textContent = HOTEL_LABELS[v];
+}
+
+function updateCostCalc() {
+  const treatEl = document.getElementById('cp-treatment');
+  const [surgCost, stayDays] = treatEl.value.split(',').map(Number);
+  const treatName = treatEl.options[treatEl.selectedIndex].text;
+
+  const countryEl = document.getElementById('cp-country');
+  const [cName, homeCostBase, rate] = countryEl.value.split(',');
+  const homeCost = Math.round(parseFloat(homeCostBase) * parseFloat(rate));
+
+  const companions = parseInt(document.getElementById('cp-companions').value);
+  const hotelIdx   = parseInt(document.getElementById('cp-hotel').value) - 1;
+  const hotelRate  = HOTEL_RATES[hotelIdx];
+  const totalDays  = Math.max(stayDays, 3);
+
+  const flightBase = 900;
+  const flightTotal = flightBase * (1 + companions);
+  const hotelTotal  = hotelRate * totalDays * (1 + companions);
+  const visaFee     = 50;
+  const airportTx   = 40;
+  const misc        = Math.round(totalDays * 15);
+  const totalIndia  = surgCost + flightTotal + hotelTotal + visaFee + airportTx + misc;
+  const saving      = homeCost - totalIndia;
+  const savePct     = Math.round((saving / homeCost) * 100);
+
+  const sym = cName === 'UK' ? '£' : cName === 'Canada' ? 'CA$' : cName === 'Australia' ? 'AU$' : '$';
+  const fmt = n => n.toLocaleString();
+
+  document.getElementById('cost-result').innerHTML = `
+    <div class="cost-breakdown">
+      <div class="breakdown-item home-price"><div class="b-label">Cost in ${cName}</div><div class="b-val">${sym}${fmt(homeCost)}</div></div>
+      <div class="breakdown-item"><div class="b-label">Surgery in India</div><div class="b-val">$${fmt(surgCost)}</div></div>
+      <div class="breakdown-item"><div class="b-label">Flights (${1+companions} pax)</div><div class="b-val">$${fmt(flightTotal)}</div></div>
+      <div class="breakdown-item"><div class="b-label">Hotel (${totalDays} nights)</div><div class="b-val">$${fmt(hotelTotal)}</div></div>
+      <div class="breakdown-item total-save" style="grid-column:1/-1">
+        <div class="b-label">Total India trip cost vs ${cName} treatment — You save</div>
+        <div class="b-val" style="font-size:1.5rem">${sym}${fmt(saving)} <span style="font-size:0.9rem;font-weight:400;color:var(--muted)">(${savePct}%)</span></div>
+      </div>
+    </div>
+    <div class="breakdown-note">✈️ Flights estimated for ${cName}. Hotel rate: ${HOTEL_LABELS[hotelIdx]}. Recovery stay: ${totalDays} nights. Visa fee: ~$${visaFee}. Figures are estimates — exact quotes provided after free consultation.</div>
+    <div style="text-align:center;margin-top:1.25rem"><a href="index.html#consult" style="background:var(--navy);color:white;padding:0.75rem 2rem;border-radius:8px;font-weight:600;font-size:0.9rem;display:inline-block">Get Exact Quote →</a></div>`;
+}
+
+// init
+updateHotelLabel();
+updateCostCalc();
+</script>
+</body>
+</html>
